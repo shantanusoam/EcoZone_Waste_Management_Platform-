@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { LogOut, User } from "lucide-react";
+import { ThemeToggle } from "@/components/theme-toggle";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 import type { Tables } from "@ecozone/types";
 
@@ -30,6 +31,7 @@ export function Header({ user, profile }: HeaderProps) {
         <h1 className="text-lg font-semibold">Dashboard</h1>
       </div>
       <div className="flex items-center gap-4">
+        <ThemeToggle />
         <div className="flex items-center gap-2 text-sm">
           <div className="rounded-full bg-primary/10 p-2">
             <User className="h-4 w-4 text-primary" />
