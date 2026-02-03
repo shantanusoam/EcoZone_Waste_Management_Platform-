@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import dynamic from "next/dynamic";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
@@ -12,6 +13,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { createBin, updateBin } from "@/app/actions/bins";
 import { createBinSchema, type CreateBinInput } from "@/lib/validations/bin";
 import type { Bin } from "@/hooks/use-bins";
+
+const LocationPickerMap = dynamic(
+  () => import("@/components/bins/location-picker").then((mod) => mod.LocationPickerMap),
+  { ssr: false, loading: () => <div className="w-full h-[200px] bg-muted animate-pulse rounded-lg" /> }
+);
 
 interface BinFormModalProps {
   open: boolean;
@@ -107,24 +113,37 @@ export function BinFormModal({ open, onOpenChange, bin }: BinFormModalProps) {
             )}
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="lat">Latitude</Label>
-              <Input
-                id="lat"
-                type="number"
-                step="any"
-                {...form.register("lat", { valueAsNumber: true })}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="lng">Longitude</Label>
-              <Input
-                id="lng"
-                type="number"
-                step="any"
-                {...form.register("lng", { valueAsNumber: true })}
-              />
+          <div className="space-y-2">
+            <Label>Location</Label>
+            <LocationPickerMap
+              lat={form.watch("lat")}
+              lng={form.watch("lng")}
+              onChange={(lat, lng) => {
+                form.setValue("lat", lat);
+                form.setValue("lng", lng);
+              }}
+            />
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <Label htmlFor="lat" className="text-xs">Latitude</Label>
+                <Input
+                  id="lat"
+                  type="number"
+                  step="any"
+                  className="h-8 text-sm"
+                  {...form.register("lat", { valueAsNumber: true })}
+                />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="lng" className="text-xs">Longitude</Label>
+                <Input
+                  id="lng"
+                  type="number"
+                  step="any"
+                  className="h-8 text-sm"
+                  {...form.register("lng", { valueAsNumber: true })}
+                />
+              </div>
             </div>
           </div>
 
