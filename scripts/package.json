@@ -1,0 +1,14 @@
+{
+  "name": "@ecozone/scripts",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "simulate": "npx tsx simulate-sensors.ts",
+    "simulate:fast": "INTERVAL=2000 npx tsx simulate-sensors.ts"
+  },
+  "devDependencies": {
+    "tsx": "^4.7.0",
+    "typescript": "^5.4.0"
+  }
+}

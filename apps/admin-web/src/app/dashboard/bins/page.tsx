@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { useBins, type Bin } from "@/hooks/use-bins";
+import { useRealtimeBins } from "@/hooks/use-realtime-bins";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,6 +16,8 @@ import { Plus, Pencil, Trash2, Search } from "lucide-react";
 
 export default function BinsPage() {
   const { data: bins, isLoading } = useBins();
+  useRealtimeBins(); // Subscribe to real-time updates
+  
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [wasteTypeFilter, setWasteTypeFilter] = useState<string>("all");

@@ -2,6 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { useBins } from "@/hooks/use-bins";
+import { useRealtimeBins } from "@/hooks/use-realtime-bins";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Trash2, AlertTriangle, Battery, TrendingUp } from "lucide-react";
 
@@ -13,6 +14,9 @@ const BinMap = dynamic(
 
 export default function DashboardPage() {
   const { data: bins, isLoading, error } = useBins();
+  
+  // Subscribe to real-time bin updates
+  useRealtimeBins();
 
   if (error) {
     return (
