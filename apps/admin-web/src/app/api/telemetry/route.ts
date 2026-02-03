@@ -1,13 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
-import type { Database } from "@ecozone/types";
 
-// Use service role client to bypass RLS for sensor data ingestion
-const supabase = createClient<Database>(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+// Lazily create Supabase client to avoid build-time errors
+function getSupabase() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+}
 
 const telemetrySchema = z.object({
   sensor_id: z.string().min(1),
@@ -41,12 +42,17 @@ export async function POST(request: NextRequest) {
 
     const { sensor_id, fill_level, battery_level } = result.data;
 
+    const supabase = getSupabase();
+
     // Find bin by sensor_id
-    const { data: bin, error: binError } = await supabase
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: binData, error: binError } = await (supabase as any)
       .from("bins")
       .select("id, fill_level")
       .eq("sensor_id", sensor_id)
       .single();
+
+    const bin = binData as { id: string; fill_level: number } | null;
 
     if (binError || !bin) {
       return NextResponse.json(
@@ -56,7 +62,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Insert sensor reading
-    const { error: readingError } = await supabase
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error: readingError } = await (supabase as any)
       .from("sensor_readings")
       .insert({
         bin_id: bin.id,
@@ -83,7 +90,8 @@ export async function POST(request: NextRequest) {
       updateData.last_pickup = new Date().toISOString();
     }
 
-    const { error: updateError } = await supabase
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error: updateError } = await (supabase as any)
       .from("bins")
       .update(updateData)
       .eq("id", bin.id);

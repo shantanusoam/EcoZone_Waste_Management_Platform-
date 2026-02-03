@@ -13,6 +13,8 @@ export function useRealtimeBins() {
   const supabase = createClient();
 
   useEffect(() => {
+    if (!supabase) return;
+
     // Subscribe to all changes on the bins table
     const channel = supabase
       .channel("bins-changes")
@@ -50,7 +52,7 @@ export function useRealtimeBin(binId: string | null) {
   const supabase = createClient();
 
   useEffect(() => {
-    if (!binId) return;
+    if (!binId || !supabase) return;
 
     const channel = supabase
       .channel(`bin-${binId}`)

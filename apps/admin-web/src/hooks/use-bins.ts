@@ -15,7 +15,8 @@ export function useBins() {
   return useQuery({
     queryKey: ["bins"],
     queryFn: async (): Promise<Bin[]> => {
-      const { data, error } = await supabase
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data, error } = await (supabase as any)
         .from("bins")
         .select("*")
         .order("fill_level", { ascending: false });
@@ -23,7 +24,7 @@ export function useBins() {
       if (error) throw error;
 
       // Parse PostGIS geography to lat/lng
-      return (data || []).map((bin) => {
+      return ((data || []) as Tables<"bins">[]).map((bin) => {
         // PostGIS returns POINT in format: { type: 'Point', coordinates: [lng, lat] }
         const location = bin.location as { type: string; coordinates: [number, number] } | null;
         return {
@@ -42,7 +43,8 @@ export function useBin(id: string) {
   return useQuery({
     queryKey: ["bins", id],
     queryFn: async (): Promise<Bin | null> => {
-      const { data, error } = await supabase
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data, error } = await (supabase as any)
         .from("bins")
         .select("*")
         .eq("id", id)
@@ -51,9 +53,10 @@ export function useBin(id: string) {
       if (error) throw error;
       if (!data) return null;
 
-      const location = data.location as { type: string; coordinates: [number, number] } | null;
+      const binData = data as Tables<"bins">;
+      const location = binData.location as { type: string; coordinates: [number, number] } | null;
       return {
-        ...data,
+        ...binData,
         lat: location?.coordinates[1] ?? 0,
         lng: location?.coordinates[0] ?? 0,
       };

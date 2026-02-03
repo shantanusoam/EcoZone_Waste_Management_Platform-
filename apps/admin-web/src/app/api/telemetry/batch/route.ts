@@ -1,12 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
-import type { Database } from "@ecozone/types";
 
-const supabase = createClient<Database>(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+// Lazily create Supabase client to avoid build-time errors
+function getSupabase() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+}
 
 const batchTelemetrySchema = z.object({
   readings: z.array(
@@ -40,9 +42,11 @@ export async function POST(request: NextRequest) {
 
     const { readings } = result.data;
     const sensorIds = readings.map((r) => r.sensor_id);
+    const supabase = getSupabase();
 
     // Get all bins for the sensor IDs
-    const { data: bins, error: binsError } = await supabase
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: binsData, error: binsError } = await (supabase as any)
       .from("bins")
       .select("id, sensor_id, fill_level")
       .in("sensor_id", sensorIds);
@@ -54,7 +58,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const binMap = new Map(bins?.map((b) => [b.sensor_id, b]) || []);
+    interface BinRow { id: string; sensor_id: string; fill_level: number; }
+    const bins = (binsData || []) as BinRow[];
+    const binMap = new Map(bins.map((b) => [b.sensor_id, b]));
     const results: { sensor_id: string; success: boolean; error?: string }[] = [];
 
     // Process each reading
@@ -71,7 +77,8 @@ export async function POST(request: NextRequest) {
       }
 
       // Insert sensor reading
-      await supabase.from("sensor_readings").insert({
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await (supabase as any).from("sensor_readings").insert({
         bin_id: bin.id,
         fill_level: reading.fill_level,
         battery_level: reading.battery_level,
@@ -87,7 +94,8 @@ export async function POST(request: NextRequest) {
         updateData.last_pickup = new Date().toISOString();
       }
 
-      await supabase.from("bins").update(updateData).eq("id", bin.id);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await (supabase as any).from("bins").update(updateData).eq("id", bin.id);
 
       results.push({ sensor_id: reading.sensor_id, success: true });
     }

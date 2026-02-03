@@ -17,7 +17,9 @@ export function Header({ user, profile }: HeaderProps) {
   const supabase = createClient();
 
   const handleSignOut = async () => {
-    await supabase.auth.signOut();
+    if (supabase) {
+      await supabase.auth.signOut();
+    }
     router.push("/login");
     router.refresh();
   };

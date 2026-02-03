@@ -17,18 +17,20 @@ export async function createBin(input: CreateBinInput): Promise<ActionResult<{ i
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return { success: false, error: "Unauthorized" };
 
-    const { data: profile } = await supabase
+    const { data: profileData } = await supabase
       .from("profiles")
       .select("role")
       .eq("id", user.id)
       .single();
+    const profile = profileData as { role: string } | null;
 
     if (profile?.role !== "admin") {
       return { success: false, error: "Only admins can create bins" };
     }
 
     // Create bin with PostGIS point
-    const { data, error } = await supabase
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data, error } = await (supabase as any)
       .from("bins")
       .insert({
         address: validated.address,
@@ -67,11 +69,12 @@ export async function updateBin(input: UpdateBinInput): Promise<ActionResult> {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return { success: false, error: "Unauthorized" };
 
-    const { data: profile } = await supabase
+    const { data: profileData } = await supabase
       .from("profiles")
       .select("role")
       .eq("id", user.id)
       .single();
+    const profile = profileData as { role: string } | null;
 
     if (profile?.role !== "admin") {
       return { success: false, error: "Only admins can update bins" };
@@ -87,7 +90,8 @@ export async function updateBin(input: UpdateBinInput): Promise<ActionResult> {
     if (validated.status) updateData.status = validated.status;
     if (validated.sensor_id) updateData.sensor_id = validated.sensor_id;
 
-    const { error } = await supabase
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error } = await (supabase as any)
       .from("bins")
       .update(updateData)
       .eq("id", validated.id);
@@ -117,17 +121,19 @@ export async function deleteBin(id: string): Promise<ActionResult> {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return { success: false, error: "Unauthorized" };
 
-    const { data: profile } = await supabase
+    const { data: profileData } = await supabase
       .from("profiles")
       .select("role")
       .eq("id", user.id)
       .single();
+    const profile = profileData as { role: string } | null;
 
     if (profile?.role !== "admin") {
       return { success: false, error: "Only admins can delete bins" };
     }
 
-    const { error } = await supabase
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error } = await (supabase as any)
       .from("bins")
       .delete()
       .eq("id", id);
