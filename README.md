@@ -20,7 +20,7 @@ EcoZone is a three-tier waste management platform connecting admins, drivers, an
 - **Maps**: Leaflet, Google Maps API
 - **Monorepo**: pnpm workspaces, Turborepo
 
-### Project Structure
+### Project Structure up
 
 ```
 .
