@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Button } from "@ecozone/ui";
 import {
   Table,
   TableBody,
@@ -57,8 +57,7 @@ export function IssuesList({ issues }: IssuesListProps) {
     const supabase = createClient();
     
     if (supabase) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      await (supabase as any)
+      await supabase
         .from("issues")
         .update({ status: "resolved" })
         .eq("id", issueId);

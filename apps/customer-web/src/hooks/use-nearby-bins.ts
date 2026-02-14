@@ -38,16 +38,12 @@ export function useNearbyBins({
       if (!supabase || !latitude || !longitude) return [];
 
       // Use PostGIS ST_Distance to find bins within range, ordered by distance
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const query = (supabase as any)
-        .rpc("get_nearby_bins", {
-          user_lat: latitude,
-          user_lng: longitude,
-          max_distance: maxDistance,
-          result_limit: limit,
-        });
-
-      const { data, error } = await query;
+      const { data, error } = await supabase.rpc("get_nearby_bins", {
+        user_lat: latitude,
+        user_lng: longitude,
+        max_distance: maxDistance,
+        result_limit: limit,
+      });
 
       if (error) {
         // If the RPC doesn't exist, fall back to fetching all bins
@@ -55,7 +51,7 @@ export function useNearbyBins({
         return fallbackQuery(supabase, latitude, longitude, wasteType, limit);
       }
 
-      let results = data as NearbyBin[];
+      let results: NearbyBin[] = data ?? [];
       
       // Filter by waste type if specified
       if (wasteType && wasteType !== "all") {
@@ -76,8 +72,7 @@ async function fallbackQuery(
 ): Promise<NearbyBin[]> {
   if (!supabase) return [];
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let query = (supabase as any)
+  let query = supabase
     .from("bins")
     .select("id, address, fill_level, waste_type, status, location")
     .eq("status", "active");

@@ -16,8 +16,7 @@ interface IssueRow {
 export default async function IssuesPage() {
   const supabase = await createClient();
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data } = await (supabase as any)
+  const { data } = await supabase
     .from("issues")
     .select(`
       id,

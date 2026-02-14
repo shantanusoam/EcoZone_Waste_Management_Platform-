@@ -4,7 +4,9 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { useDriverRoute, useMarkCollected, useStartRoute, useCompleteRoute } from "@/hooks/use-driver-route";
-import { Button } from "@/components/ui/button";
+import { useDriverLocation } from "@/hooks/use-driver-location";
+import { Button } from "@ecozone/ui";
+import { MarkCollectedDialog } from "@/components/mark-collected-dialog";
 import { getFillLevelColor } from "@ecozone/types";
 import {
   Truck,
@@ -17,6 +19,8 @@ import {
   Loader2,
 } from "lucide-react";
 
+type PendingCollect = { pickupId: string; binId: string } | null;
+
 export default function DriverPage() {
   const router = useRouter();
   const supabase = createClient();
@@ -25,6 +29,9 @@ export default function DriverPage() {
   const startRoute = useStartRoute();
   const completeRoute = useCompleteRoute();
   const [collectingId, setCollectingId] = useState<string | null>(null);
+  const [pendingCollect, setPendingCollect] = useState<PendingCollect>(null);
+
+  useDriverLocation(route?.id, route?.status === "in_progress");
 
   const handleSignOut = async () => {
     if (supabase) {
@@ -39,10 +46,20 @@ export default function DriverPage() {
     window.open(url, "_blank");
   };
 
-  const handleCollect = async (pickupId: string, binId: string) => {
-    setCollectingId(pickupId);
+  const handleCollectClick = (pickupId: string, binId: string) => {
+    setPendingCollect({ pickupId, binId });
+  };
+
+  const handleConfirmCollected = async (photo?: File) => {
+    if (!pendingCollect) return;
+    setCollectingId(pendingCollect.pickupId);
     try {
-      await markCollected.mutateAsync({ pickupId, binId });
+      await markCollected.mutateAsync({
+        pickupId: pendingCollect.pickupId,
+        binId: pendingCollect.binId,
+        photo,
+      });
+      setPendingCollect(null);
     } finally {
       setCollectingId(null);
     }
@@ -201,6 +218,16 @@ export default function DriverPage() {
                             Collected at {new Date(stop.collected_at).toLocaleTimeString()}
                           </p>
                         )}
+                        {isCollected && stop.photo_url && (
+                          <a
+                            href={stop.photo_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-xs text-primary underline mt-1 inline-block"
+                          >
+                            View proof photo
+                          </a>
+                        )}
                       </div>
                     </div>
 
@@ -219,7 +246,7 @@ export default function DriverPage() {
                         <Button
                           size="sm"
                           className="flex-1"
-                          onClick={() => handleCollect(stop.id, stop.bin_id)}
+                          onClick={() => handleCollectClick(stop.id, stop.bin_id)}
                           disabled={isCollecting}
                         >
                           {isCollecting ? (
@@ -240,6 +267,17 @@ export default function DriverPage() {
           </div>
         )}
       </main>
+
+      {pendingCollect && (
+        <MarkCollectedDialog
+          open={!!pendingCollect}
+          onOpenChange={(open) => !open && setPendingCollect(null)}
+          pickupId={pendingCollect.pickupId}
+          binId={pendingCollect.binId}
+          onConfirm={handleConfirmCollected}
+          isSubmitting={markCollected.isPending}
+        />
+      )}
     </div>
   );
 }

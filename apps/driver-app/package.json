@@ -13,6 +13,7 @@
     "@ecozone/types": "workspace:*",
     "@ecozone/ui": "workspace:*",
     "@radix-ui/react-alert-dialog": "^1.0.5",
+    "@radix-ui/react-dialog": "^1.0.5",
     "@radix-ui/react-slot": "^1.0.2",
     "@supabase/ssr": "^0.1.0",
     "@supabase/supabase-js": "^2.39.0",

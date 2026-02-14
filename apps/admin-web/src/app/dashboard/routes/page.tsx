@@ -1,7 +1,7 @@
 import { getRoutes, getDrivers, getBinsNeedingPickup } from "@/app/actions/routes";
 import { RoutesList } from "@/components/routes/routes-list";
 import { CreateRouteDialog } from "@/components/routes/create-route-dialog";
-import { Button } from "@/components/ui/button";
+import { Button } from "@ecozone/ui";
 import { Plus } from "lucide-react";
 
 export const dynamic = "force-dynamic";

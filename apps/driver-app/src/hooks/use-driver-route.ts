@@ -10,6 +10,7 @@ export interface RouteStop {
   status: "pending" | "collected" | "skipped";
   collected_at: string | null;
   fill_level_at_pickup: number | null;
+  photo_url: string | null;
   bin: {
     id: string;
     address: string;
@@ -68,6 +69,7 @@ export function useDriverRoute() {
           status,
           collected_at,
           fill_level_at_pickup,
+          photo_url,
           bins (
             id,
             address,
@@ -88,6 +90,7 @@ export function useDriverRoute() {
         status: "pending" | "collected" | "skipped";
         collected_at: string | null;
         fill_level_at_pickup: number | null;
+        photo_url: string | null;
         bins: { id: string; address: string; fill_level: number; waste_type: string; location: unknown } | null;
       }
 
@@ -103,6 +106,7 @@ export function useDriverRoute() {
           status: p.status,
           collected_at: p.collected_at,
           fill_level_at_pickup: p.fill_level_at_pickup,
+          photo_url: p.photo_url ?? null,
           bin: {
             id: bin?.id || "",
             address: bin?.address || "",
@@ -129,11 +133,42 @@ export function useMarkCollected() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ pickupId, binId }: { pickupId: string; binId: string }) => {
+    mutationFn: async ({
+      pickupId,
+      binId,
+      photo,
+    }: {
+      pickupId: string;
+      binId: string;
+      photo?: File;
+    }) => {
       if (!supabase) throw new Error("Supabase not configured");
-      
-      const { data: { user } } = await supabase.auth.getUser();
+
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
+
+      // Upload photo to storage if provided
+      let photoUrl: string | null = null;
+      if (photo) {
+        const fileExt = photo.name.split(".").pop() || "jpg";
+        const fileName = `${pickupId}-${Date.now()}.${fileExt}`;
+        const filePath = `pickups/${fileName}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from("pickup-photos")
+          .upload(filePath, photo, { upsert: false });
+
+        if (uploadError) {
+          throw new Error(`Photo upload failed: ${uploadError.message}`);
+        }
+
+        const {
+          data: { publicUrl },
+        } = supabase.storage.from("pickup-photos").getPublicUrl(filePath);
+        photoUrl = publicUrl;
+      }
 
       // Get current bin fill level
       const { data: binData } = await supabase
@@ -143,22 +178,21 @@ export function useMarkCollected() {
         .single();
       const bin = binData as { fill_level: number } | null;
 
-      // Update pickup status
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { error: pickupError } = await (supabase as any)
+      // Update pickup status (including optional photo_url)
+      const { error: pickupError } = await supabase
         .from("pickups")
         .update({
           status: "collected",
           collected_at: new Date().toISOString(),
           fill_level_at_pickup: bin?.fill_level || 0,
+          ...(photoUrl && { photo_url: photoUrl }),
         })
         .eq("id", pickupId);
 
       if (pickupError) throw pickupError;
 
       // Reset bin fill level
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { error: binError } = await (supabase as any)
+      const { error: binError } = await supabase
         .from("bins")
         .update({
           fill_level: 0,
@@ -182,8 +216,7 @@ export function useStartRoute() {
 
   return useMutation({
     mutationFn: async (routeId: string) => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { error } = await (supabase as any)
+      const { error } = await supabase
         .from("routes")
         .update({ status: "in_progress" })
         .eq("id", routeId);
@@ -203,8 +236,7 @@ export function useCompleteRoute() {
 
   return useMutation({
     mutationFn: async (routeId: string) => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { error } = await (supabase as any)
+      const { error } = await supabase
         .from("routes")
         .update({ status: "completed" })
         .eq("id", routeId);

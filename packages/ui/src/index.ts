@@ -1,7 +1,13 @@
 // Utilities
 export { cn } from "./lib/utils";
 
-// Components will be added here as they are created
-// export { Button } from "./components/button";
-// export { Card } from "./components/card";
-// etc.
+// Components
+export { Button, buttonVariants } from "./components/button";
+export {
+  Card,
+  CardHeader,
+  CardFooter,
+  CardTitle,
+  CardDescription,
+  CardContent,
+} from "./components/card";

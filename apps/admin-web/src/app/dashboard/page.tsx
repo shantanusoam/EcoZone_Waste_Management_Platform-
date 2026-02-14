@@ -3,7 +3,7 @@
 import dynamic from "next/dynamic";
 import { useBins } from "@/hooks/use-bins";
 import { useRealtimeBins } from "@/hooks/use-realtime-bins";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@ecozone/ui";
 import { Trash2, AlertTriangle, Battery, TrendingUp } from "lucide-react";
 
 // Dynamic import to avoid SSR issues with Leaflet

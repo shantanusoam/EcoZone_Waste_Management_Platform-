@@ -9,6 +9,12 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[];
 
+/** PostGIS geography point as returned by Supabase (GeoJSON-style) */
+export interface PostGISPoint {
+  type?: "Point";
+  coordinates: [number, number]; // [longitude, latitude]
+}
+
 // Placeholder types until Supabase generates them
 export interface Database {
   public: {
@@ -37,7 +43,7 @@ export interface Database {
       bins: {
         Row: {
           id: string;
-          location: unknown; // PostGIS geography
+          location: PostGISPoint;
           address: string;
           capacity_liters: number;
           waste_type: "general" | "recycling" | "organic" | "hazardous";
@@ -52,7 +58,7 @@ export interface Database {
         };
         Insert: {
           id?: string;
-          location: unknown;
+          location: PostGISPoint | string; // PostGISPoint or WKT e.g. "POINT(lng lat)"
           address: string;
           capacity_liters?: number;
           waste_type?: "general" | "recycling" | "organic" | "hazardous";
@@ -62,7 +68,7 @@ export interface Database {
           sensor_id: string;
         };
         Update: {
-          location?: unknown;
+          location?: PostGISPoint | string;
           address?: string;
           capacity_liters?: number;
           waste_type?: "general" | "recycling" | "organic" | "hazardous";
@@ -70,6 +76,7 @@ export interface Database {
           fill_level?: number;
           battery_level?: number;
           last_pickup?: string | null;
+          predicted_full?: string | null;
           sensor_id?: string;
         };
       };
@@ -112,6 +119,27 @@ export interface Database {
           stops?: Json;
         };
       };
+      driver_locations: {
+        Row: {
+          driver_id: string;
+          route_id: string;
+          lat: number;
+          lng: number;
+          updated_at: string;
+        };
+        Insert: {
+          driver_id: string;
+          route_id: string;
+          lat: number;
+          lng: number;
+          updated_at?: string;
+        };
+        Update: {
+          lat?: number;
+          lng?: number;
+          updated_at?: string;
+        };
+      };
       pickups: {
         Row: {
           id: string;
@@ -143,7 +171,7 @@ export interface Database {
       issues: {
         Row: {
           id: string;
-          reported_by: string;
+          reported_by: string | null;
           bin_id: string;
           type: "overflow" | "damage" | "missed";
           description: string;
@@ -154,7 +182,7 @@ export interface Database {
         };
         Insert: {
           id?: string;
-          reported_by: string;
+          reported_by?: string | null;
           bin_id: string;
           type: "overflow" | "damage" | "missed";
           description: string;
@@ -169,7 +197,26 @@ export interface Database {
       };
     };
     Views: Record<string, never>;
-    Functions: Record<string, never>;
+    Functions: {
+      get_nearby_bins: {
+        Args: {
+          user_lat: number;
+          user_lng: number;
+          max_distance?: number;
+          result_limit?: number;
+        };
+        Returns: {
+          id: string;
+          address: string;
+          fill_level: number;
+          waste_type: string;
+          status: string;
+          lat: number;
+          lng: number;
+          distance_meters: number;
+        }[];
+      };
+    };
     Enums: {
       user_role: "admin" | "driver" | "customer";
       waste_type: "general" | "recycling" | "organic" | "hazardous";

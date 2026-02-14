@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import type { Database } from "@ecozone/types";
 import { z } from "zod";
+import { computePredictedFull } from "@/lib/fill-prediction";
 
-// Lazily create Supabase client to avoid build-time errors
+// Lazily create Supabase client (service role for IoT ingestion)
 function getSupabase() {
-  return createClient(
+  return createClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   );
@@ -45,8 +47,7 @@ export async function POST(request: NextRequest) {
     const supabase = getSupabase();
 
     // Find bin by sensor_id
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: binData, error: binError } = await (supabase as any)
+    const { data: binData, error: binError } = await supabase
       .from("bins")
       .select("id, fill_level")
       .eq("sensor_id", sensor_id)
@@ -62,8 +63,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Insert sensor reading
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { error: readingError } = await (supabase as any)
+    const { error: readingError } = await supabase
       .from("sensor_readings")
       .insert({
         bin_id: bin.id,
@@ -85,13 +85,19 @@ export async function POST(request: NextRequest) {
       battery_level,
     };
 
-    // If fill level dropped significantly (collected), update last_pickup
+    // If fill level dropped significantly (collected), update last_pickup and clear prediction
     if (bin.fill_level > 50 && fill_level < 10) {
       updateData.last_pickup = new Date().toISOString();
+      updateData.predicted_full = null;
+    } else {
+      // Predict time to 90% full from sensor_readings history
+      const predictedFull = await computePredictedFull(supabase, bin.id, fill_level);
+      if (predictedFull) {
+        updateData.predicted_full = predictedFull;
+      }
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { error: updateError } = await (supabase as any)
+    const { error: updateError } = await supabase
       .from("bins")
       .update(updateData)
       .eq("id", bin.id);

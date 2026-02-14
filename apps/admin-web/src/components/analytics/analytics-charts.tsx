@@ -20,6 +20,8 @@ interface AnalyticsChartsProps {
   binsByStatus: Record<string, number>;
   fillDistribution: { empty: number; medium: number; full: number };
   pickupData: Array<{ id: string; fill: number }>;
+  collectionsByDay?: Array<{ date: string; count: number; label: string }>;
+  driverPerformance?: Array<{ driver: string; routes: number; collected: number }>;
 }
 
 const STATUS_COLORS: Record<string, string> = {
@@ -34,6 +36,8 @@ export function AnalyticsCharts({
   binsByStatus,
   fillDistribution,
   pickupData,
+  collectionsByDay = [],
+  driverPerformance = [],
 }: AnalyticsChartsProps) {
   // Format data for pie chart
   const statusData = Object.entries(binsByStatus).map(([status, count]) => ({
@@ -50,6 +54,40 @@ export function AnalyticsCharts({
 
   return (
     <div className="space-y-6">
+      {/* Collections over time (last 7 days) */}
+      {collectionsByDay.length > 0 && (
+        <div className="bg-card rounded-lg border p-6">
+          <h3 className="font-semibold text-lg mb-4">Collections Over Time (Last 7 Days)</h3>
+          <ResponsiveContainer width="100%" height={280}>
+            <BarChart data={collectionsByDay}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="label" />
+              <YAxis allowDecimals={false} />
+              <Tooltip />
+              <Bar dataKey="count" fill="#10b981" name="Collections" radius={[8, 8, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      )}
+
+      {/* Driver performance (last 30 days) */}
+      {driverPerformance.length > 0 && (
+        <div className="bg-card rounded-lg border p-6">
+          <h3 className="font-semibold text-lg mb-4">Driver Performance (Last 30 Days)</h3>
+          <ResponsiveContainer width="100%" height={280}>
+            <BarChart data={driverPerformance} layout="vertical" margin={{ left: 80 }}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis type="number" />
+              <YAxis dataKey="driver" type="category" width={80} tick={{ fontSize: 12 }} />
+              <Tooltip />
+              <Legend />
+              <Bar dataKey="routes" fill="#3b82f6" name="Routes" radius={[0, 4, 4, 0]} />
+              <Bar dataKey="collected" fill="#10b981" name="Stops Collected" radius={[0, 4, 4, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      )}
+
       {/* Bins by Status - Pie Chart */}
       <div className="bg-card rounded-lg border p-6">
         <h3 className="font-semibold text-lg mb-4">Bin Status Distribution</h3>

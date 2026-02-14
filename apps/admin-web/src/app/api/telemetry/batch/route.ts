@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import type { Database } from "@ecozone/types";
 import { z } from "zod";
 
-// Lazily create Supabase client to avoid build-time errors
+// Lazily create Supabase client (service role for IoT ingestion)
 function getSupabase() {
-  return createClient(
+  return createClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   );
@@ -45,8 +46,7 @@ export async function POST(request: NextRequest) {
     const supabase = getSupabase();
 
     // Get all bins for the sensor IDs
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: binsData, error: binsError } = await (supabase as any)
+    const { data: binsData, error: binsError } = await supabase
       .from("bins")
       .select("id, sensor_id, fill_level")
       .in("sensor_id", sensorIds);
@@ -77,8 +77,7 @@ export async function POST(request: NextRequest) {
       }
 
       // Insert sensor reading
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      await (supabase as any).from("sensor_readings").insert({
+      await supabase.from("sensor_readings").insert({
         bin_id: bin.id,
         fill_level: reading.fill_level,
         battery_level: reading.battery_level,
@@ -94,8 +93,7 @@ export async function POST(request: NextRequest) {
         updateData.last_pickup = new Date().toISOString();
       }
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      await (supabase as any).from("bins").update(updateData).eq("id", bin.id);
+      await supabase.from("bins").update(updateData).eq("id", bin.id);
 
       results.push({ sensor_id: reading.sensor_id, success: true });
     }

@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { Button } from "@/components/ui/button";
+import { Button } from "@ecozone/ui";
 import { LogOut, User } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import type { User as SupabaseUser } from "@supabase/supabase-js";

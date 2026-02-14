@@ -1,10 +1,11 @@
 "use server";
 
+import { requireRole } from "@ecozone/auth";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createBinSchema, updateBinSchema, type CreateBinInput, type UpdateBinInput } from "@/lib/validations/bin";
 
-export type ActionResult<T = void> = 
+export type ActionResult<T = void> =
   | { success: true; data: T }
   | { success: false; error: string };
 
@@ -12,25 +13,11 @@ export async function createBin(input: CreateBinInput): Promise<ActionResult<{ i
   try {
     const validated = createBinSchema.parse(input);
     const supabase = await createClient();
+    const auth = await requireRole(supabase, "admin");
+    if ("error" in auth) return { success: false, error: auth.error };
 
-    // Check user is admin
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return { success: false, error: "Unauthorized" };
-
-    const { data: profileData } = await supabase
-      .from("profiles")
-      .select("role")
-      .eq("id", user.id)
-      .single();
-    const profile = profileData as { role: string } | null;
-
-    if (profile?.role !== "admin") {
-      return { success: false, error: "Only admins can create bins" };
-    }
-
-    // Create bin with PostGIS point
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data, error } = await (supabase as any)
+    // Create bin with PostGIS point (WKT format)
+    const { data, error } = await supabase
       .from("bins")
       .insert({
         address: validated.address,
@@ -65,20 +52,8 @@ export async function updateBin(input: UpdateBinInput): Promise<ActionResult> {
   try {
     const validated = updateBinSchema.parse(input);
     const supabase = await createClient();
-
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return { success: false, error: "Unauthorized" };
-
-    const { data: profileData } = await supabase
-      .from("profiles")
-      .select("role")
-      .eq("id", user.id)
-      .single();
-    const profile = profileData as { role: string } | null;
-
-    if (profile?.role !== "admin") {
-      return { success: false, error: "Only admins can update bins" };
-    }
+    const auth = await requireRole(supabase, "admin");
+    if ("error" in auth) return { success: false, error: auth.error };
 
     const updateData: Record<string, unknown> = {};
     if (validated.address) updateData.address = validated.address;
@@ -90,8 +65,7 @@ export async function updateBin(input: UpdateBinInput): Promise<ActionResult> {
     if (validated.status) updateData.status = validated.status;
     if (validated.sensor_id) updateData.sensor_id = validated.sensor_id;
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { error } = await (supabase as any)
+    const { error } = await supabase
       .from("bins")
       .update(updateData)
       .eq("id", validated.id);
@@ -117,23 +91,10 @@ export async function updateBin(input: UpdateBinInput): Promise<ActionResult> {
 export async function deleteBin(id: string): Promise<ActionResult> {
   try {
     const supabase = await createClient();
+    const auth = await requireRole(supabase, "admin");
+    if ("error" in auth) return { success: false, error: auth.error };
 
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return { success: false, error: "Unauthorized" };
-
-    const { data: profileData } = await supabase
-      .from("profiles")
-      .select("role")
-      .eq("id", user.id)
-      .single();
-    const profile = profileData as { role: string } | null;
-
-    if (profile?.role !== "admin") {
-      return { success: false, error: "Only admins can delete bins" };
-    }
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { error } = await (supabase as any)
+    const { error } = await supabase
       .from("bins")
       .delete()
       .eq("id", id);

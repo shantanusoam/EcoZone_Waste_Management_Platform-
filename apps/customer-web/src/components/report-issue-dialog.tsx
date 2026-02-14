@@ -3,7 +3,7 @@
 import { useState, useRef } from "react";
 import { createClient } from "@/lib/supabase/client";
 import type { NearbyBin } from "@/hooks/use-nearby-bins";
-import { Button } from "@/components/ui/button";
+import { Button } from "@ecozone/ui";
 import {
   Select,
   SelectContent,
@@ -83,8 +83,7 @@ export function ReportIssueDialog({ open, onOpenChange, bin }: ReportIssueDialog
         const fileName = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}.${fileExt}`;
         const filePath = `issues/${fileName}`;
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const { error: uploadError } = await (supabase as any).storage
+        const { error: uploadError } = await supabase.storage
           .from("issue-photos")
           .upload(filePath, photoFile);
 
@@ -92,17 +91,19 @@ export function ReportIssueDialog({ open, onOpenChange, bin }: ReportIssueDialog
           console.warn("Photo upload failed:", uploadError);
           // Continue without photo
         } else {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const { data } = (supabase as any).storage
+          const { data } = supabase.storage
             .from("issue-photos")
             .getPublicUrl(filePath);
           imageUrl = data.publicUrl;
         }
       }
 
-      // Create issue record (using anonymous submission - no user_id required)
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { error: insertError } = await (supabase as any)
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      // Create issue record (reported_by = user id when logged in, null for anonymous)
+      const { error: insertError } = await supabase
         .from("issues")
         .insert({
           bin_id: bin.id,
@@ -110,7 +111,7 @@ export function ReportIssueDialog({ open, onOpenChange, bin }: ReportIssueDialog
           description: description || `${issueType} reported at ${bin.address}`,
           image_url: imageUrl,
           status: "open",
-          // reported_by will be null for anonymous reports
+          reported_by: user?.id ?? null,
         });
 
       if (insertError) {

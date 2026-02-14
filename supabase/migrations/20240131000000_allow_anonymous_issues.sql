@@ -1,5 +1,5 @@
--- Allow anonymous issue reports by making user_id optional
-ALTER TABLE issues ALTER COLUMN user_id DROP NOT NULL;
+-- Allow anonymous issue reports by making reported_by optional
+ALTER TABLE issues ALTER COLUMN reported_by DROP NOT NULL;
 
 -- Create storage bucket for issue photos
 INSERT INTO storage.buckets (id, name, public)

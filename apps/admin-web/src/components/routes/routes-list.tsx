@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { deleteRoute } from "@/app/actions/routes";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Button } from "@ecozone/ui";
 import {
   Table,
   TableBody,
@@ -22,7 +22,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Trash2, Truck } from "lucide-react";
+import { ViewRouteMapDialog } from "./view-route-map-dialog";
+import { downloadCSV } from "@/lib/export-csv";
+import { MapPin, Trash2, Truck, Download } from "lucide-react";
 
 interface Route {
   id: string;
@@ -47,6 +49,7 @@ const statusColors: Record<string, string> = {
 export function RoutesList({ routes }: RoutesListProps) {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [viewMapId, setViewMapId] = useState<string | null>(null);
 
   const handleDelete = async () => {
     if (!deleteId) return;
@@ -54,6 +57,17 @@ export function RoutesList({ routes }: RoutesListProps) {
     await deleteRoute(deleteId);
     setIsDeleting(false);
     setDeleteId(null);
+  };
+
+  const handleExportCSV = () => {
+    const data = routes.map((r) => ({
+      driver: r.driver_name,
+      scheduled_date: r.scheduled_date,
+      status: r.status,
+      total_stops: r.total_stops,
+      collected_stops: r.collected_stops,
+    }));
+    downloadCSV(data, `routes-${new Date().toISOString().split("T")[0]}.csv`);
   };
 
   if (routes.length === 0) {
@@ -70,6 +84,12 @@ export function RoutesList({ routes }: RoutesListProps) {
 
   return (
     <>
+      <div className="flex justify-end mb-2">
+        <Button variant="outline" size="sm" onClick={handleExportCSV}>
+          <Download className="h-4 w-4 mr-2" />
+          Export CSV
+        </Button>
+      </div>
       <div className="bg-card rounded-lg border">
         <Table>
           <TableHeader>
@@ -100,12 +120,21 @@ export function RoutesList({ routes }: RoutesListProps) {
                 <TableCell>
                   {route.collected_stops}/{route.total_stops} stops
                 </TableCell>
-                <TableCell>
+                <TableCell className="flex gap-1">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setViewMapId(route.id)}
+                    title="View on map"
+                  >
+                    <MapPin className="h-4 w-4" />
+                  </Button>
                   <Button
                     variant="ghost"
                     size="icon"
                     onClick={() => setDeleteId(route.id)}
                     disabled={route.status === "in_progress"}
+                    title="Delete route"
                   >
                     <Trash2 className="h-4 w-4 text-destructive" />
                   </Button>
@@ -137,6 +166,12 @@ export function RoutesList({ routes }: RoutesListProps) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <ViewRouteMapDialog
+        routeId={viewMapId}
+        open={!!viewMapId}
+        onOpenChange={(open) => !open && setViewMapId(null)}
+      />
     </>
   );
 }

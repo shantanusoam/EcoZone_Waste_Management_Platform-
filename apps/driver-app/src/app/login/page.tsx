@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { Button } from "@/components/ui/button";
+import { Button } from "@ecozone/ui";
 import { Truck } from "lucide-react";
 
 export default function LoginPage() {

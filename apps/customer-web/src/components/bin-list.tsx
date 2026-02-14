@@ -1,7 +1,7 @@
 "use client";
 
 import type { NearbyBin } from "@/hooks/use-nearby-bins";
-import { Button } from "@/components/ui/button";
+import { Button } from "@ecozone/ui";
 import { getFillLevelColor } from "@ecozone/types";
 import { Navigation, AlertTriangle, Trash2, Recycle, Leaf, Skull } from "lucide-react";
 

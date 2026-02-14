@@ -11,6 +11,7 @@ import {
   AlertTriangle,
   BarChart3,
   Settings,
+  Users,
 } from "lucide-react";
 
 const navigation = [
@@ -19,6 +20,7 @@ const navigation = [
   { name: "Routes", href: "/dashboard/routes", icon: Route },
   { name: "Issues", href: "/dashboard/issues", icon: AlertTriangle },
   { name: "Analytics", href: "/dashboard/analytics", icon: BarChart3 },
+  { name: "Users", href: "/dashboard/users", icon: Users },
   { name: "Settings", href: "/dashboard/settings", icon: Settings },
 ];
 

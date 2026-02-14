@@ -3,9 +3,9 @@
 import { useState, useMemo } from "react";
 import { useBins, type Bin } from "@/hooks/use-bins";
 import { useRealtimeBins } from "@/hooks/use-realtime-bins";
-import { Button } from "@/components/ui/button";
+import { Button } from "@ecozone/ui";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@ecozone/ui";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";

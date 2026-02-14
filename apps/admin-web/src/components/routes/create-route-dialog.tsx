@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { createRoute } from "@/app/actions/routes";
-import { Button } from "@/components/ui/button";
+import { Button } from "@ecozone/ui";
 import {
   Dialog,
   DialogContent,

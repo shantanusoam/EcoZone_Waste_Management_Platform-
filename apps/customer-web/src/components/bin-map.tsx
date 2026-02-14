@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { MapContainer, TileLayer, Marker, Popup, useMap, Circle } from "react-leaflet";
 import L from "leaflet";
 import type { NearbyBin } from "@/hooks/use-nearby-bins";
-import { Button } from "@/components/ui/button";
+import { Button } from "@ecozone/ui";
 import { getFillLevelColor } from "@ecozone/types";
 import { Navigation } from "lucide-react";
 import "leaflet/dist/leaflet.css";

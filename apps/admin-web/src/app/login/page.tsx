@@ -3,9 +3,9 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { Button } from "@/components/ui/button";
+import { Button } from "@ecozone/ui";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@ecozone/ui";
 import { Leaf } from "lucide-react";
 
 export default function LoginPage() {
